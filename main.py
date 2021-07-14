@@ -1,7 +1,8 @@
 import discord
 import os
 #allows code to make https requests to retrieve data from api
-import requests
+#import requests
+import aiohttp
 #api returns JSON
 import json
 import random
@@ -17,18 +18,19 @@ init_encouragements = [
 ]
 
 
-def get_quote():
-    response = requests.get("https://zenquotes.io/api/random")
-    json_data = json.loads(
-        response.text)  #getting the data from the json returned
-    quote = json_data[0]['q'] + " -" + json_data[0]['a']
-    return (quote)
+#def get_quote():
+#    response = requests.get("https://zenquotes.io/api/random")
+#    json_data = json.loads(
+#        response.text)  #getting the data from the json returned
+#    quote = json_data[0]['q'] + " -" + json_data[0]['a']
+#    return (quote)
 
 
 def update_encouragements(enc_msg):
     if "encouragements" in db.keys():
         encouragements = db["encouragements"]
         encouragements.append(enc_msg)
+        print(enc_msg + ' was added to the database!')
         db["encouragements"] = encouragements
     else:
         db["encouragments"] = [enc_msg]
@@ -57,7 +59,11 @@ async def on_message(message):
         await message.channel.send('Hello!')
 
     if msg.startswith('!Inspire'):
-        quote = get_quote()
+        async with aiohttp.ClientSession() as session:
+          async with session.get('https://zenquotes.io/api/random') as response:
+            html = await response.text()
+            json_data = json.loads(html)
+        quote = json_data[0]['q'] + " -" + json_data[0]['a']
         await message.channel.send(quote)
 
     #to combine init msgs with user submitted ones
